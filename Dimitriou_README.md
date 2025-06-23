@@ -47,40 +47,42 @@ Name: Dr. A. Cole Burton
 - JOFF_IUCN.csv: These data represent terrestrial mammal species whose IUCN range polygons overlap with the boundaries of Joffre Lakes Provincial Park. Relevant fields were extracted from the IUCN Red List spatial data.
 
 ## DATA-SPECIFIC INFORMATION FOR: model_data.csv
-Deployment.Location.ID: camera trap station ID. 
-start_date: first day of the survey month. 
-end_date: last day of the survey month. 
-latitude: latitude of Deployment.Location.ID. 
-longitude: longitude of Deployment.Location.ID. 
+Deployment.Location.ID: camera trap station ID
+start_date: first day of the survey month
+end_date: last day of the survey month
+latitude: latitude of Deployment.Location.ID
+longitude: longitude of Deployment.Location.ID
 park: which park (Joffre Lakes of Garibaldi) the detection was in
-year: year of the detection. 
-effort: monthly effort at Deployment.Location.ID. 
-log_effort: log transformed effort used as an effort offset term. 
-trail: whether the camera trap was deployed on trail or off traildist_to_trail: distance in meters to the nearest hiking trail from the camera trap (on trail = 0). 
-prox_to_trail_decay: decay transformed dist_to_trail (e^(-distance/500m)) (on trail = 1). Previously named dist_to_trail_decay.  
+year: year of the detection
+effort: monthly effort at Deployment.Location.ID
+log_effort: log transformed effort used as an effort offset term
+trail: whether the camera trap was deployed on trail or off trail
+dist_to_trail: distance in meters to the nearest hiking trail from the camera trap (on trail = 0)
+prox_to_trail_decay: decay transformed dist_to_trail (e^(-distance/500m)) (on trail = 1). Previously names dist_to_trail_decay.
 elevation: elevation in meters above sea level.
-elevation scaled: elevation scaled by subtracting the mean and dividing by SD. 
-mean_ndvi: Mean Normalized Difference in Vegetation Index per month at each CT site, measured in 16-day intervals (250-meter resolution). Mean is the average of each 16-day value which overlaps a minimum of 5 days with a given month.  
-mean_ndvi_scaled: mean_ndvi scaled by subtracting the mean and dividing by SD. 
+elevation scaled: elevation scaled by subtracting the mean and dividing by SD
+mean_ndvi: Mean Normalized Difference in Vegetation Index per month at each CT site, measured in 16-day intervals (250-meter resolution). Mean is the average of each 16-day value which overlaps a minimum of 5 days with a given month.
+mean_ndvi_scaled: mean_ndvi scaled by subtracting the mean and dividing by SD
 canopy_cover: Percentage of vegetation taller than 2m (100m radius around CT site).
-canopy_cover_scaled: canopy_cover scaled by subtracting the mean and dividing by SD. 
-recreation_park_month: total number of independent human detections in the entire park within a given survey month. 
-rec_month_100: effort corrected recreation_park_month (recreation_park_month/ monthly effort x 100). 
-rec_month_100_scaled: rec_month_100 scaled by subtracting the mean and dividing by SD. 
-recreation_park_year: total number of independent human detections in the entire park within a given survey year (only months May through October included). 
-rec_year_100: effort corrected recreation_park_year (recreation_park_year/yearly effort x 100). 
-rec_year_100_scaled: rec_year_100 scaled by subtracting the mean and dividing by SD. 
-recreation_site_month: total number of independent human detections at a given camera trap station within a given survey month. 
-rec_site_100: effort corrected recreation_site_month (recreation_site_month/monthly effort x 100). 
-rec_site_100_scaled: rec_site_100 scaled by subtracting the mean and dividing by SD. 
-lepus_detections: number of independent detections of snowshoe hare (Lepus americanus) at a given camera trap station, in a given survey month. 
-ursus_detections: number of independent detections of black bear (Ursus americanus) at a given camera trap station, in a given survey month. 
-odocoileus_detections: number of independent detections of mule deer (Odocoileus hemionus) at a given camera trap station, in a given survey month. 
-martes_detections: number of independent detections of American marten (Martes americana) at a given camera trap station, in a given survey month. 
-canis_detections: number of independent detections of coyote (Canis latrans) at a given camera trap station, in a given survey month. 
-lynx_detections: number of independent detections of bobcat (Lynx rufus) at a given camera trap station, in a given survey month. 
-marmota_detections: number of independent detections of hoary marmot (Marmota caligata) at a given camera trap station, in a given survey month. 
-rare_detections: combined number of independent detections of rare carnivores (Canada lynx, cougar, grey wolf, grizzly bear, wolverine) at a given camera trap station, in a given survey month. 
+canopy_cover_scaled: canopy_cover scaled by subtracting the mean and dividing by SD
+recreation_park_month: total number of independent human detections in the entire park within a given survey month
+rec_month_100: effort corrected recreation_park_month (recreation_park_month/ monthly effort x 100)
+rec_month_100_scaled: rec_month_100 scaled by subtracting the mean and dividing by SD
+recreation_park_year: total number of independent human detections in the entire park within a given survey year (only months May through October included)
+rec_year_100: effort corrected recreation_park_year (recreation_park_year/yearly effort x 100)
+rec_year_100_scaled: rec_year_100 scaled by subtracting the mean and dividing by SD
+recreation_site_month: total number of independent human detections at a given camera trap station within a given survey month
+rec_site_100: effort corrected recreation_site_month (recreation_site_month/monthly effort x 100)
+rec_site_100_scaled: rec_site_100 scaled by subtracting the mean and dividing by SD
+lepus_detections: number of independent detections of snowshoe hare (Lepus americanus) at a given camera trap station, in a given survey month
+ursus_detections:
+odocoileus_detections: number of independent detections of mule deer (Odocoileus hemionus) at a given camera trap station, in a given survey month
+ursus_detections: number of independent detections of black bear (Ursus americanus) at a given camera trap station, in a given survey month
+martes_detections: number of independent detections of American marten (Martes americana) at a given camera trap station, in a given survey month
+canis_detections: number of independent detections of coyote (Canis latrans) at a given camera trap station, in a given survey month
+lynx_detections: number of independent detections of bobcat (Lynx rufus) at a given camera trap station, in a given survey month
+marmota_detections: number of independent detections of hoary marmot (Marmota caligata) at a given camera trap station, in a given survey month
+rare_detections: combined number of independent detections of rare carnivores (Canada lynx, cougar, grey wolf, grizzly bear, wolverine) at a given camera trap station, in a given survey month
 
 ## DATA-SPECIFIC INFORMATION FOR: GARI_30min_Independent_daily_observations.csv and JOFF_30min_Independent_daily_observations.csv
 Date: calendar date in format YYYY-MM-DD
