@@ -2,3 +2,8 @@
 .Rhistory
 .RData
 .Ruserdata
+.DS_Store
+
+# Ignore all files in brms_output and diversity_output
+brms_output/
+diversity_output/

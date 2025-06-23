@@ -903,7 +903,7 @@ compare_groups_bootstrap <- function(data, group_var, metric, level1, level2) {
   )
 }
 
-# Run Bootstrapped Comparisons
+# Run Bootstrap Comparisons
 n_boot <- 1000
 metrics <- c("Richness", "Shannon", "Evenness")
 all_results <- list()
