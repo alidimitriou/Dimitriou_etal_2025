@@ -437,7 +437,6 @@ print(moran_results)
 # Number of significant Moran's I results (p < 0.05)
 sum(moran_results$P_Value < 0.05, na.rm = TRUE)
 
-
 # Species to test
 species_list <- c("Black bear", "Rare Carnivores", "Marmot", "Marten", "Bobcat", "Hare", "Coyote", "Deer")
 
@@ -613,6 +612,8 @@ for (f in model_files) {
 
 # View table
 print(bayes_pvals)
+
+
 # ---------------------------------------------------------------
 ## Community analysis 
 # ---------------------------------------------------------------
@@ -870,16 +871,19 @@ saveRDS(evenness_estimates, "~/Desktop/Dimitriou_etal_2025/diversity_output/even
 # ---------------------------------------------------------------
 # Bootstrap hypothesis test
 # ---------------------------------------------------------------
-  
+
 # Bootstrap simulation function
 simulate_bootstrap <- function(mean, se, n = 10000) {
   rnorm(n, mean = mean, sd = se)
 }
 
 # Function to run bootstrapped comparison
-compare_groups_bootstrap <- function(data, group_var, metric, level1, level2) {
-  sim1 <- data %>% filter(!!sym(group_var) == level1) %>% pull(Simulated) %>% .[[1]]
-  sim2 <- data %>% filter(!!sym(group_var) == level2) %>% pull(Simulated) %>% .[[1]]
+compare_groups_bootstrap <- function(data, group_var, metric, level1, level2, n_boot) {
+  sim1_list <- data %>% filter(!!sym(group_var) == level1) %>% pull(Simulated)
+  sim2_list <- data %>% filter(!!sym(group_var) == level2) %>% pull(Simulated)
+
+  sim1 <- sim1_list[[1]]
+  sim2 <- sim2_list[[1]]
   
   est1 <- data %>% filter(!!sym(group_var) == level1) %>% pull(.data[[metric]])
   se1  <- data %>% filter(!!sym(group_var) == level1) %>% pull(.data[[paste0("SE_", metric)]])
@@ -887,7 +891,11 @@ compare_groups_bootstrap <- function(data, group_var, metric, level1, level2) {
   se2  <- data %>% filter(!!sym(group_var) == level2) %>% pull(.data[[paste0("SE_", metric)]])
   
   diff_sim <- sim2 - sim1
-  boot_p_value <- 2 * min(mean(diff_sim >= 0), mean(diff_sim <= 0))
+  
+  # Continuity-corrected two-sided p-value
+  prop_ge_0 <- (sum(diff_sim >= 0) + 1) / (n_boot + 1)
+  prop_le_0 <- (sum(diff_sim <= 0) + 1) / (n_boot + 1)
+  boot_p_value <- 2 * min(prop_ge_0, prop_le_0)
   
   data.frame(
     Metric = metric,
@@ -899,27 +907,30 @@ compare_groups_bootstrap <- function(data, group_var, metric, level1, level2) {
     Estimate_1 = est1,
     SE_1 = se1,
     Estimate_2 = est2,
-    SE_2 = se2
+    SE_2 = se2,
+    N_Boot = n_boot
   )
 }
 
 # Run Bootstrap Comparisons
-n_boot <- 1000
+n_boot <- 10000
 metrics <- c("Richness", "Shannon", "Evenness")
 all_results <- list()
 
 for (metric in metrics) {
-  evenness_estimates <- evenness_estimates %>%
-    mutate(Simulated = map2(.data[[metric]], SE_Evenness, ~ simulate_bootstrap(.x, .y, n_boot)))
+  se_col <- paste0("SE_", metric)
+
+  sim_estimates <- evenness_estimates %>%
+    mutate(Simulated = map2(.data[[metric]], .data[[se_col]], ~ simulate_bootstrap(.x, .y, n_boot)))
   
   # Between-Year Comparisons (Within Each Park)
-  for (park in unique(evenness_estimates$Park)) {
-    park_data <- evenness_estimates %>% filter(Park == park)
+  for (park in unique(sim_estimates$Park)) {
+    park_data <- sim_estimates %>% filter(Park == park)
     years <- unique(park_data$Year)
     
     for (i in 1:(length(years) - 1)) {
       for (j in (i + 1):length(years)) {
-        res <- compare_groups_bootstrap(park_data, "Year", metric, years[i], years[j])
+        res <- compare_groups_bootstrap(park_data, "Year", metric, years[i], years[j], n_boot)
         res$Park <- park
         res$Comparison_Type <- "Between-Year"
         all_results <- append(all_results, list(res))
@@ -927,13 +938,13 @@ for (metric in metrics) {
     }
   }
   
-  #Between-Park Comparisons (Within Each Year)
-  for (year in unique(evenness_estimates$Year)) {
-    year_data <- evenness_estimates %>% filter(Year == year)
+  # Between-Park Comparisons (Within Each Year)
+  for (year in unique(sim_estimates$Year)) {
+    year_data <- sim_estimates %>% filter(Year == year)
     parks <- unique(year_data$Park)
     
     if (length(parks) == 2) {
-      res <- compare_groups_bootstrap(year_data, "Park", metric, parks[1], parks[2])
+      res <- compare_groups_bootstrap(year_data, "Park", metric, parks[1], parks[2], n_boot)
       res$Year <- year
       res$Comparison_Type <- "Between-Park"
       all_results <- append(all_results, list(res))
@@ -941,15 +952,13 @@ for (metric in metrics) {
   }
 }
 
-# Combine and Correct Results
+# Combine and Correct Results (Benjamini-Hochberg)
 results_df <- bind_rows(all_results)
-results_df$Boot_BY_P_Value <- p.adjust(results_df$Boot_P_Value, method = "BY")
+results_df$Boot_BH_P_Value <- p.adjust(results_df$Boot_P_Value, method = "BH")
 
 # Round numeric values
 results_df <- results_df %>%
   mutate(across(where(is.numeric), ~ round(.x, 2)))
 
 # Save Results
-write.csv(results_df, "~/Desktop/Dimitriou_etal_2025/diversity_output/diversity_bootstrap_BY_results.csv", row.names = FALSE)
- 
-
+write.csv(results_df, "~/Desktop/Dimitriou_etal_2025/diversity_output/diversity_bootstrap_BH_results_.csv", row.names = FALSE)
