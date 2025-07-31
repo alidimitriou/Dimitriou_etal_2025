@@ -160,21 +160,20 @@ print(re_sd_df)
 # ---------------------------------------------------------------
 ## Effect size plots
 # ---------------------------------------------------------------
-
 # Variable labels
 var_labels <- c(
   "b_mean_ndvi_scaled" = "NDVI",
   "b_prox_to_trail_decay" = "Proximity to Trail",
   "b_elevation_scaled" = "Elevation",
   "b_canopy_cover_scaled" = "Canopy Cover",
-  "b_rec_month_100_scaled" = "Recreation Park-Month",
+  "b_rec_month_100_scaled" = "Park-Month Recreation",
   "b_rec_month_100_scaled:prox_to_trail_decay" = "Recreation × Trail",
-  "b_dist_to_trail_decay" = "Proximity to Trail",  
+  "b_dist_to_trail_decay" = "Proximity to Trail", 
   "b_rec_month_100_scaled:dist_to_trail_decay" = "Recreation × Trail"
 )
 
 # Prepare data for plotting
-plot_df <- posterior_estimates_by_species %>%
+plot_df <- summary_df %>%
   filter(Parameter %in% names(var_labels)) %>%
   rename(
     median = Estimate,
@@ -218,10 +217,11 @@ combined_effects_plot <- ggplot(plot_df, aes(y = Variable)) +
   labs(x = "Posterior Estimate", y = NULL)
 
 # Save
-ggsave(filename = file.path(output_dir, "Recreation_and_Significant_Effects.png"),
+ggsave(filename = file.path(output_dir, "Recreation_and_Significant_Other_Effects.png"),
        plot = combined_effects_plot, width = 12, height = 14, dpi = 300)
 
-# ---------------------------------------------------------------
+
+# ---------------------------------------------------------------   
 # Autocorrelation tests
 # ---------------------------------------------------------------
 # Define species and detection columns
@@ -233,8 +233,7 @@ species_name_map <- list(
   "Bobcat" = "lynx_detections",
   "Marten" = "martes_detections",
   "Marmot" = "marmota_detections",
-  "Rare Carnivores" = "rare_detections"
-)
+  "Rare Carnivores" = "rare_detections")
 
 parks <- c("Garibaldi", "Joffre Lakes")
 
