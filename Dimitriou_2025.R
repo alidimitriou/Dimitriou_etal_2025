@@ -160,79 +160,51 @@ print(re_sd_df)
 # ---------------------------------------------------------------
 ## Effect size plots
 # ---------------------------------------------------------------
-# Extract all significant effects across models
-prepare_all_significant_effects <- function(model_path, species_name) {
-  model <- readRDS(model_path)
-  posterior_samples <- as_draws_df(model)
-  
-  all_vars <- c(
-    "b_mean_ndvi_scaled",
-    "b_prox_to_trail_decay",
-    "b_elevation_scaled",
-    "b_canopy_cover_scaled",
-    "b_rec_month_100_scaled",
-    "b_rec_month_100_scaled:prox_to_trail_decay"
-  )
-  
-  existing_vars <- all_vars[all_vars %in% colnames(posterior_samples)]
-  if (length(existing_vars) == 0) return(NULL)
-  
-  # Keep only weak (80% CI do not span 0) and strong effects (95% CI do not span 0)
-  posterior_samples %>%
-    select(all_of(existing_vars)) %>%
-    pivot_longer(cols = everything(), names_to = "Variable", values_to = "Estimate") %>%
-    mutate(Species = species_name) %>%
-    group_by(Species, Variable) %>%
-    summarize(
-      median   = median(Estimate),
-      lower95  = quantile(Estimate, 0.025),
-      upper95  = quantile(Estimate, 0.975),
-      lower80  = quantile(Estimate, 0.10),
-      upper80  = quantile(Estimate, 0.90),
-      .groups = "drop"
-    ) %>%
-    filter((lower95 >= 0 | upper95 <= 0) | (lower80 >= 0 | upper80 <= 0))
-}
 
-#  Process all models and aggregate significant effects to plot
-model_files <- list.files(output_dir, pattern = "_model\\.rds$", full.names = TRUE)
-
-all_significant_effects <- list()
-for (model_path in model_files) {
-  species_name <- gsub("_model\\.rds", "", basename(model_path))
-  effects <- prepare_all_significant_effects(model_path, species_name)
-  if (!is.null(effects)) all_significant_effects[[species_name]] <- effects
-}
-
-all_significant_effects_df <- bind_rows(all_significant_effects)
-if (nrow(all_significant_effects_df) == 0) stop("No significant variables found across all models.")
-
-
+# Variable labels
 var_labels <- c(
   "b_mean_ndvi_scaled" = "NDVI",
   "b_prox_to_trail_decay" = "Proximity to Trail",
   "b_elevation_scaled" = "Elevation",
   "b_canopy_cover_scaled" = "Canopy Cover",
   "b_rec_month_100_scaled" = "Recreation Park-Month",
-  "b_rec_month_100_scaled:prox_to_trail_decay" = "Recreation × Trail"
+  "b_rec_month_100_scaled:prox_to_trail_decay" = "Recreation × Trail",
+  "b_dist_to_trail_decay" = "Proximity to Trail",  
+  "b_rec_month_100_scaled:dist_to_trail_decay" = "Recreation × Trail"
 )
 
-plot_df <- all_significant_effects_df %>%
-  mutate(Variable = factor(var_labels[Variable], levels = rev(unique(var_labels))))
+# Prepare data for plotting
+plot_df <- posterior_estimates_by_species %>%
+  filter(Parameter %in% names(var_labels)) %>%
+  rename(
+    median = Estimate,
+    lower95 = Lower_95,
+    upper95 = Upper_95,
+    lower80 = Lower_80,
+    upper80 = Upper_80
+  ) %>%
+  # Filter: keep Recreation always, others only if 80% CI does NOT cross 0
+  filter(
+    Parameter == "b_rec_month_100_scaled" |
+      (lower80 > 0 | upper80 < 0)
+  ) %>%
+  mutate(
+    Variable = factor(var_labels[Parameter], levels = rev(unique(var_labels))),
+    is_recreation = ifelse(Parameter == "b_rec_month_100_scaled", "Recreation", "Other")
+  )
 
+# Plot
 combined_effects_plot <- ggplot(plot_df, aes(y = Variable)) +
-  geom_segment(aes(x = lower80, xend = upper80, yend = Variable),
-               linewidth = 3, color = "#1f78b4") +
-  geom_segment(aes(x = lower95, xend = upper95, yend = Variable),
-               linewidth = 1.2, color = "#084594") +
-  geom_point(aes(x = median), size = 4.5, color = "#084594") +
+  geom_segment(aes(x = lower80, xend = upper80, yend = Variable, color = is_recreation), linewidth = 3) +
+  geom_segment(aes(x = lower95, xend = upper95, yend = Variable, color = is_recreation), linewidth = 1.2) +
+  geom_point(aes(x = median, color = is_recreation), size = 4.5) +
   geom_vline(xintercept = 0, linetype = "dashed", color = "red", linewidth = 1) +
   facet_wrap(~Species, scales = "free_y", ncol = 1) +
+  scale_color_manual(values = c("Recreation" = "#2E8B57", "Other" = "#084594")) +
   theme_minimal(base_size = 18) +
   theme(
     panel.grid.major = element_blank(),
     panel.grid.minor = element_blank(),
-    #strip.text = element_blank(), # uncomment to remove species labels
     panel.spacing = unit(1.5, "lines"),
     axis.text = element_text(size = 16),
     axis.title = element_text(size = 18),
@@ -240,68 +212,14 @@ combined_effects_plot <- ggplot(plot_df, aes(y = Variable)) +
     panel.border = element_blank(),
     panel.background = element_blank(),
     panel.grid = element_blank(),
-    axis.line = element_line(color = "black", linewidth = 0.8)
+    axis.line = element_line(color = "black", linewidth = 0.8),
+    legend.position = "none"
   ) +
   labs(x = "Posterior Estimate", y = NULL)
 
-# Save Plot
-ggsave(filename = file.path(output_dir, "All_Significant_Effects_80_95CI.png"),
-       plot = combined_effects_plot, width = 12, height = 14, dpi = 300)
-
-# ---------------------------------------------------------------
-# Recreation effect plot 
-# ---------------------------------------------------------------
-# Recreation variable of interest
-target_variable <- "b_rec_month_100_scaled"
-
-# Extract and summarize recreation effect
-recreation_effects <- lapply(model_files, function(path) {
-  model <- readRDS(path)
-  species <- gsub("_model\\.rds", "", basename(path))
-  samples <- as_draws_df(model)
-  
-  if (!target_variable %in% colnames(samples)) return(NULL)
-  
-  samples %>%
-    select(all_of(target_variable)) %>%
-    rename(Estimate = all_of(target_variable)) %>%
-    mutate(Species = species) %>%
-    group_by(Species) %>%
-    summarize(
-      median = median(Estimate),
-      lower95 = quantile(Estimate, 0.025),
-      upper95 = quantile(Estimate, 0.975),
-      lower80 = quantile(Estimate, 0.10),
-      upper80 = quantile(Estimate, 0.90),
-      .groups = "drop"
-    )
-}) %>% bind_rows()
-
-
-# Plot
-recreation_plot <- ggplot(recreation_effects, aes(y = Species)) +
-  geom_segment(aes(x = lower80, xend = upper80, yend = Species), linewidth = 3, color = "#1f78b4") +
-  geom_segment(aes(x = lower95, xend = upper95, yend = Species), linewidth = 1.2, color = "#084594") +
-  geom_point(aes(x = median), size = 4.5, color = "#084594") +
-  geom_vline(xintercept = 0, linetype = "dashed", color = "red", linewidth = 1) +
-  theme_minimal(base_size = 18) +
-  labs(x = "Posterior Estimate for Park-Month Recreation", y = NULL) +
-  theme(
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank(),
-    axis.line.x = element_line(color = "black", linewidth = 0.8),
-    axis.line.y = element_line(color = "black", linewidth = 0.8),
-    axis.ticks = element_line(color = "black"),
-    axis.text.x = element_text(size = 16),
-    axis.text.y = element_text(size = 16),
-    axis.title = element_text(size = 18),
-    panel.spacing = unit(1.5, "lines")
-  )
-
 # Save
-ggsave(filename = file.path(output_dir, "Recreation_Park_Month_Effects.png"),
-       plot = recreation_plot, width = 12, height = 10, dpi = 300)
-
+ggsave(filename = file.path(output_dir, "Recreation_and_Significant_Effects.png"),
+       plot = combined_effects_plot, width = 12, height = 14, dpi = 300)
 
 # ---------------------------------------------------------------
 # Autocorrelation tests
