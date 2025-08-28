@@ -837,7 +837,8 @@ all_results <- list()
 
 for (metric in metrics) {
   se_col <- paste0("SE_", metric)
-
+  
+  # Create a fresh copy for each metric
   sim_estimates <- evenness_estimates %>%
     mutate(Simulated = map2(.data[[metric]], .data[[se_col]], ~ simulate_bootstrap(.x, .y, n_boot)))
   
