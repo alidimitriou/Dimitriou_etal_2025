@@ -14,15 +14,12 @@ Coauthor 1
 Name: Dr. Sarah Benson-Amram
 		Institution: Departments of Zoology & Forest and Conservation Sciences, University of British Columbia, Vancouver, British Columbia, Canada
 		
-Coauthor 2 
+Coauthor 2
 Name: Dr. Kaitlyn Gaynor
 		Institution: Department of Zoology , University of British Columbia, Vancouver, British Columbia, Canada
 		
-Coauthor 3
-Name: Melanie Percy
-		Institution: BC Parks, BC Ministry of Environment and Climate Change Strategy, Victoria, British Columbia, Canada
 		
-Coauthor 4 
+Coauthor 3 
 Name: Dr. A. Cole Burton
 		Institution: Department of Forest Resources Management, University of British Columbia, Vancouver, British Columbia, Canada
 		
